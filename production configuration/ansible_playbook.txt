@@ -1,0 +1,92 @@
+---
+
+- hosts: g_all
+  become: yes
+  
+  tasks:          
+        - name: add usr with no pwd
+          user:
+                  name: "{{ user_name }}"
+                  comment: bobsan
+                  
+          tags:
+          - add_user        
+                  
+        - name: Add the user 'bob' with a specific uid and a primary group of 'admin'
+          user:
+                  name: "{{ user_name }}"
+                  comment: Ghassan Bob
+                  group: wheel
+          tags:
+          - add_user_with_group       
+          
+        - name: Assign user with wheel group and bash
+          user:
+                  name: "{{ user_name }}"
+                  shell: /bin/bash
+                  groups: wheel
+                  append: yes
+          tags:
+          - append_to_wheel_bash
+          
+        - name: Remove the user
+          user:
+                  name: "{{ user_name }}"
+                  state: absent
+                  remove: yes
+          tags:
+          - remove_user
+          
+          
+        - name: Create a 2048-bit SSH key for a user in ~user/.ssh/id_rsa
+          user:
+                  name: "{{ user_name }}"
+                  generate_ssh_key: yes
+                  ssh_key_bits: 2048
+                  ssh_key_file: .ssh/id_rsa
+          tags:
+          - ssh-keygen for user
+          
+          
+        - name: Added a consultant whose account you want to expire
+          user:
+                  name: "{{ user_name }}"
+                  shell: /bin/bash
+                  groups: developers
+                  expires: 1422403387
+          tags:
+          - add expiry session
+          
+          
+        - name: Starting at Ansible 2.6, modify user, remove expiry time
+          user:
+                  name: bob
+                  expires: -1
+          tags:
+          - remove expiry time
+          
+        - name: copy file and overwrite if exist to remote host 
+          copy:
+                  src: test_file
+                  dest: $HOME/Desktop
+                  
+          tags:
+          - copy_file  
+        
+        - name: Set authorized key taken from default dir
+          authorized_key:
+            user: "{{ user_name }}"
+            state: present
+            key: "{{ lookup('file', '/home/{{ user_name }}/.ssh/id_rsa.pub') }}"
+
+          tags:
+          - deliver_authorized_key
+        
+        - name: remove user key from authorized key file
+          authorized_key:
+            user: "{{ user_name }}"
+            state: absent
+            key: "{{ lookup('file', '/home/{{ user_name }}/.ssh/id_rsa.pub') }}"
+
+          tags:
+          - remove_authorized_key
